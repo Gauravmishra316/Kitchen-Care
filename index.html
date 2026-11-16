@@ -4737,6 +4737,37 @@
 
     // Initial render
     renderLoginScreen();
+
+    // Direct route via hash (for testing, direct views & documentation screenshots)
+    function handleInitialRoute() {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#pin') {
+        selectStaffForLogin('u_w1');
+      } else if (hash === '#waiter' || hash === '#tables') {
+        loginUser('u_w1');
+      } else if (hash === '#menu') {
+        loginUser('u_w1');
+        activeTable = 'Table 4';
+        currentScreen = 'waiter_menu';
+        renderCurrentScreen();
+      } else if (hash === '#scribble') {
+        loginUser('u_w1');
+        activeTable = 'Table 4';
+        currentScreen = 'waiter_menu';
+        renderCurrentScreen();
+      } else if (hash === '#chef' || hash === '#kds') {
+        loginUser('u_c1');
+      } else if (hash === '#manager' || hash === '#stock') {
+        loginUser('u_mgr');
+      } else if (hash === '#admin') {
+        loginUser('u_admin');
+      } else if (hash === '#billing' || hash === '#settle') {
+        loginUser('u_w1');
+        openTableBillModal('Table 4');
+      }
+    }
+    handleInitialRoute();
+    window.addEventListener('hashchange', handleInitialRoute);
   </script>
 </body>
 </html>
