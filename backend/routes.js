@@ -195,3 +195,4 @@ async function handleApiRequest(req, res) {
 }
 
 module.exports = { handleApiRequest };
+
