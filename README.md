@@ -1,6 +1,50 @@
-# 🥘 KitchenCare — Indian Restaurant Kitchen & Service Management
+# 🥘 KitchenCare — Full-Stack Indian Restaurant Management System
 
-> A robust, fast, and offline-capable Kitchen Order Ticketing (KOT), Kitchen Display System (KDS), Multi-Waiter Floor Management, and PIN-Authenticated POS platform designed specifically for Indian restaurants.
+> A production-ready, full-stack Kitchen Order Ticketing (KOT), Kitchen Display System (KDS), Multi-Waiter Floor Management, and PIN-Authenticated POS platform with a **Node.js REST API** and **SQLite Database** backend.
+
+---
+
+## 🌟 Modern Full-Stack Architecture
+
+KitchenCare is architected into clean, decoupled layers:
+
+```
+kitchencare/
+├── css/
+│   └── style.css            # Modular styles, CSS variables, thermal receipt print styles
+├── js/
+│   ├── api.js               # REST API client (/api/...) with offline fallback
+│   ├── state.js             # DataLayer with reactive background SQLite sync
+│   ├── auth.js              # POS PIN authentication, on-screen keypad & session control
+│   ├── chef.js              # Chef KDS, FEFO auto-deduction & smart chef assignment
+│   ├── waiter.js            # Waiter dining floor, 38-dish menu, canvas scribble pad & billing
+│   ├── manager.js           # Kitchen manager dashboard, batch expiry tracking & fridge temps
+│   ├── admin.js             # Owner analytics, food cost %, chef metrics & audit logs
+│   ├── audio.js             # Web Audio API tone generator (bell ding, alert chime)
+│   ├── i18n.js              # Bilingual localization (English & Hindi)
+│   └── app.js               # Main router, navigation tabs, toast alerts & live sync
+├── backend/
+│   └── routes.js            # Node.js HTTP REST API router
+├── data/
+│   ├── database.js          # SQLite Database engine (built on native node:sqlite)
+│   └── kitchencare.db       # Persistent SQLite database file
+├── screenshots/             # High-resolution UI screenshots
+├── index.html               # Clean, semantic 114-line single-page HTML entry point
+├── server.js                # Full Node.js HTTP static server & REST API
+├── package.json             # NPM metadata and scripts
+├── .gitignore               # Strict security exclusion rules
+└── README.md                # System documentation & credentials directory
+```
+
+---
+
+## ⚡ Real-Time Features & Enhancements
+
+* **💾 Real SQLite Database Backend:** Powered by Node.js native `node:sqlite` (`DatabaseSync`), requiring zero external compiled npm packages. Complete ACID transactions for tables, orders, dishes, and inventory batches.
+* **📡 Real-Time Multi-Device Sync:** The client polls `/api/sync` every 2.5 seconds. When a waiter submits a KOT order from a tablet, it appears on the chef's KDS. When the chef marks food ready, the waiter's pass pickup banner appears.
+* **🟢 Live DB Connection Indicator:** Visual status badge (`SQLite Live` vs `Local Cache`) in the top navigation header.
+* **🖨️ Thermal Receipt Printing:** Built-in `@media print` CSS styling for instant 80mm/58mm thermal receipt printing upon bill settlement.
+* **🛡️ Zero Supply-Chain Risk:** Runs entirely on standard Node.js libraries — zero external dependencies, 100% offline capable.
 
 ---
 
@@ -69,6 +113,32 @@ KitchenCare enforces PIN-based authentication. Use the credentials below to log 
 
 ---
 
+## 🌐 REST API Endpoints
+
+The Node.js backend exposes clean JSON REST API endpoints on `http://localhost:5050/api/`:
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Service health & database status |
+| `GET` | `/api/sync` | Full database synchronization snapshot |
+| `POST` | `/api/auth/login` | Authenticate user with 4-digit PIN |
+| `GET` | `/api/users` | List all staff members |
+| `GET` | `/api/tables` | Get all dining tables and statuses |
+| `PATCH` | `/api/tables/:id` | Update table status, assigned waiter, guest count |
+| `POST` | `/api/tables/:id/settle` | Settle table bill and reset status to vacant |
+| `GET` | `/api/orders` | Get all active and completed KOT orders |
+| `POST` | `/api/orders` | Dispatch new KOT order with items & scribble notes |
+| `PATCH` | `/api/orders/:id` | Update order status (`cooking`, `ready`, `served`, `paid`) |
+| `GET` | `/api/dishes` | List all 38 dishes with recipes and allergens |
+| `GET` | `/api/ingredients` | List all ingredients with FEFO batches |
+| `POST` | `/api/ingredients/deduct` | Execute FEFO ingredient batch deduction |
+| `POST` | `/api/ingredients/add-stock` | Log new goods received with supplier batch details |
+| `POST` | `/api/wastage` | Log ingredient wastage with cost and reason |
+| `POST` | `/api/temperature-logs` | Record twice-daily fridge temperature checks |
+| `GET` | `/api/backup` | Download complete database JSON backup |
+
+---
+
 ## 📖 Step-by-Step Instructions to Use the Website
 
 ### Step 1: Run the Server Locally
@@ -104,7 +174,7 @@ KitchenCare enforces PIN-based authentication. Use the credentials below to log 
    - Draw handwritten instructions on the digital canvas notepad (e.g. *"Serve naans piping hot"* or *"Extra lemon & onion"*).
    - Select dietary chips (`🌶️ Extra Spicy`, `🟢 Jain (No Onion/Garlic)`, `👶 Mild`, `🌾 Gluten-Free`, `⚡ Rush Order`).
 4. **Custom Off-Menu Requests:** Enter custom items not on the standard menu with custom pricing.
-5. Tap **"🚀 Send KOT to Kitchen"** — the order is dispatched immediately to the chef KDS.
+5. Tap **"🚀 Send KOT to Kitchen"** — the order is dispatched immediately to the SQLite database and chef KDS.
 
 ---
 
@@ -112,7 +182,7 @@ KitchenCare enforces PIN-based authentication. Use the credentials below to log 
 1. Switch to Chef view (or log in as **Vikram Singh**, PIN `3331`).
 2. Live orders appear with waiting timers and dietary badges.
 3. Tap **"🍳 Start Cooking"**:
-   - The system automatically triggers **FEFO (First-Expired, First-Out)** ingredient deduction from inventory.
+   - The system automatically triggers **FEFO (First-Expired, First-Out)** ingredient deduction from database batches.
 4. Tap **"✍️ View Waiter Scribble"** to view high-resolution customer notes in a lightbox.
 5. When plated, tap **"🔔 Mark Ready"** — this pushes the order to the pass pickup queue and plays an alert tone.
 
@@ -121,17 +191,17 @@ KitchenCare enforces PIN-based authentication. Use the credentials below to log 
 ### Step 5: Food Pickup at Pass & Table Updates
 1. Any waiter on duty sees the **"🔔 FOOD READY FOR PICKUP AT PASS"** banner.
 2. Tap **"🍽️ Pick Up & Mark Served"** to deliver food to the table.
-3. The table status automatically updates to `🍽️ Dining`.
+3. The table status automatically updates to `🍽️ Dining` in the database.
 
 ---
 
 ### Step 6: Billing & Table Reset
-1. When guests request the bill, tap **"🧾 Request Bill"** on the table card.
+1. When guests finish dining, tap **"🧾 Request Bill"** on the table card.
 2. Tap **"💳 Settle & Clear Table"** to open the billing modal.
 3. Review the itemized breakdown (Subtotal + 5% GST).
 4. Choose the payment method: **📱 UPI / QR Code**, **💵 Cash**, or **💳 Card / POS**.
 5. Tap **"✅ Complete Payment & Clear Table"**:
-   - Payment is archived to sales reports.
+   - Payment is archived to sales reports in SQLite.
    - Table status resets to `⚪ Vacant`, ready for the next guests.
 
 ---
@@ -139,7 +209,7 @@ KitchenCare enforces PIN-based authentication. Use the credentials below to log 
 ### Step 7: Inventory & Batch Expiry Tracking (Manager)
 1. Log in as **Amit Patel** (Manager, PIN `2222`).
 2. Monitor **Today at a Glance**: batches expiring in ≤ 3 days (amber badge), expired batches (red badge), and low-stock alerts.
-3. Tap **"➕ Add Stock"** when supplier deliveries arrive to log new batch numbers, quantities, costs, and expiry dates.
+3. Tap **"➕ Add Stock"** when supplier deliveries arrive to log new batch numbers, quantities, costs, and expiry dates into SQLite.
 4. Log wastage with reason codes and record twice-daily fridge temperature checks for FSSAI compliance.
 
 ---
@@ -147,14 +217,14 @@ KitchenCare enforces PIN-based authentication. Use the credentials below to log 
 ### Step 8: Admin Reports & Auditing
 1. Log in as **Rajesh Sharma** (Admin, PIN `1111`).
 2. View live Gross Sales, Net Profit, Food Cost %, and Chef Performance metrics.
-3. Audit Log tracks every user action, PIN login, order dispatch, and payment with timestamps.
+3. Audit Log tracks every user action, PIN login, order dispatch, and payment with timestamps in SQLite.
 4. Export data to CSV for accounting.
 
 ---
 
 ## 🍲 38 Authentic Indian Dishes Catalog
 
-* **🍢 Starters & Tandoor (11):** Paneer Tikka, Tandoori Chicken Full, Chicken Tikka Kebab, Hara Bhara Kebab, Dahi Ke Kebab, Veg Seekh Kebab, Crispy Corn Pepper Salt, Chilli Chicken Dry, Paneer Malai Tikka, etc.
+* **🍢 Starters & Tandoor (11):** Paneer Tikka, Tandoori Chicken Full, Chicken Tikka Kebab, Hara Bhara Kebab, Dahi Ke Kebab, Veg Seekh Kebab, Crispy Corn Pepper Salt, Chilli Chicken Dry, Paneer Malai Tikka, Veg Hakka Noodles, Chilli Paneer Gravy.
 * **🥘 Curries & Mains (10):** Dal Makhani, Butter Chicken, Paneer Butter Masala, Kadai Paneer, Palak Paneer, Chicken Tikka Masala, Mutton Rogan Josh, Malai Kofta, Pindi Chana Masala, Boiled Egg Masala.
 * **🍚 Rice & Biryani (6):** Hyderabadi Chicken Dum Biryani, Lucknowi Veg Dum Biryani, Mutton Dum Biryani, Jeera Rice, Steamed Basmati Rice, Veg Fried Rice.
 * **🫓 Tandoor Breads (5):** Tandoori Roti, Butter Naan, Garlic Naan, Laccha Paratha, Cheese Chilli Naan.
@@ -165,15 +235,15 @@ KitchenCare enforces PIN-based authentication. Use the credentials below to log 
 
 ## 🛡️ Security & Privacy Notice
 * **Zero Sensitive Data:** No hardcoded secret tokens, private API keys, or unhashed passwords.
-* **Safe `.gitignore`:** Strict exclusion of `.env*`, `*.pem`, `*.key`, `*.cert`, `*.log`, credentials, and IDE cache.
-* **Client-Side Storage Isolation:** All session tokens and kitchen master stores use sandboxed browser `localStorage` and `sessionStorage`.
+* **Safe `.gitignore`:** Strict exclusion of `.env*`, `*.pem`, `*.key`, `*.cert`, `*.log`, credentials, database backups, and IDE cache.
+* **Client-Side Storage Isolation:** All session tokens use sandboxed browser `sessionStorage`.
 * **Zero External Dependencies:** Built with pure vanilla HTML5, CSS3, JavaScript, and Node.js standard libraries for complete offline functionality and zero supply-chain attack vectors.
 
 ---
 
 ## 🛠️ Tech Stack
-* **Frontend:** Modern Vanilla HTML5, CSS3 Variables, ES6 JavaScript, HTML5 Canvas API
-* **Storage:** Browser `localStorage` with fail-safe auto-migrating data layer (`v2`)
+* **Frontend:** Vanilla HTML5, CSS3 Variables, ES6 JavaScript, HTML5 Canvas API
+* **Backend:** Node.js HTTP Server & REST API (`server.js`, `backend/routes.js`)
+* **Database:** Native SQLite Database (`node:sqlite DatabaseSync`, `data/kitchencare.db`)
 * **Audio:** Web Audio API sound synthesis (zero external audio files)
-* **Backend:** Node.js native `http` module (zero external dependencies)
 * **License:** MIT
