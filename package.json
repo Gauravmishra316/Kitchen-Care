@@ -1,0 +1,23 @@
+{
+  "name": "kitchencare",
+  "version": "1.0.0",
+  "description": "Smart Kitchen & Service Management System for Indian Restaurants",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "restaurant",
+    "pos",
+    "kds",
+    "kot",
+    "kitchen-management",
+    "fefo",
+    "inventory",
+    "waiter-ordering"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+
